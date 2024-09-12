@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.Px
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -182,6 +183,9 @@ fun App(viewModel: ViewModelPessoa, mainActivity: MainActivity) {
             items(pessoaList){ pessoa ->
                 Row(
                     Modifier
+                        .clickable {
+                            viewModel.deletePessoa(pessoa)
+                        }
                         .fillMaxWidth(),
                     Arrangement.Center
 
