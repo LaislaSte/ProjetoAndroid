@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -66,6 +67,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun App(db: FirebaseFirestore) {
     var nome by remember {
@@ -93,6 +95,7 @@ fun App(db: FirebaseFirestore) {
     ) {
         Spacer(modifier = Modifier.height(20.dp))
 
+        //titulo
         Row(
             Modifier.fillMaxWidth(),
             Arrangement.Center
@@ -108,6 +111,7 @@ fun App(db: FirebaseFirestore) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        //nome com set value
         TextField(
             value = nome,
             onValueChange = { nome = it },
@@ -117,6 +121,7 @@ fun App(db: FirebaseFirestore) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        //telefone com set value
         TextField(
             value = telefone,
             onValueChange = { telefone = it },
@@ -145,6 +150,41 @@ fun App(db: FirebaseFirestore) {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text("Cadastrar")
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Titulo da Lista
+        Row(
+            Modifier.fillMaxWidth(),
+            Arrangement.Center
+        ) {
+            Text(
+                text = "Nomes e telefones",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                color = Color.White
+            )
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            Modifier
+                .fillMaxWidth(),
+            Arrangement.Center
+        ) {
+            Column (
+                Modifier
+                    .fillMaxWidth(0.5f)
+            ){
+                Text(text = "Nome")
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth(0.5f)
+            ){
+                Text(text = "telefone")
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -193,53 +233,71 @@ fun App(db: FirebaseFirestore) {
                     }
             }
         }
-        Divider()
 
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Titulo da Lista de outra forma
         Row(
-            Modifier
-                .fillMaxWidth(),
+            Modifier.fillMaxWidth(),
             Arrangement.Center
         ) {
-            Column (
-                Modifier
-                    .fillMaxWidth(0.5f)
-            ){
-                Text(text = "Nome")
-            }
-            Column(
-                Modifier
-                    .fillMaxWidth(0.5f)
-            ){
-                Text(text = "telefone")
-            }
+            Text(
+                text = "Nomes e telefones de outra forma",
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp,
+                color = Color.White
+            )
         }
 
-        Divider()
+        Spacer(modifier = Modifier.height(20.dp))
 
-        LazyColumn {
-            items(pessoaList){ pessoa ->
-                Row(
-                    Modifier
-                        .fillMaxWidth(),
-                    Arrangement.Center
+        Row(
+            Modifier.fillMaxWidth()
+        ) {
 
-                ) {
-                    Column (
-                        Modifier
-                            .fillMaxWidth(0.5f)
-                    ){
-                        Text(text = "${pessoa.nome}")
-
+            val pessoaList = mutableStateListOf<HashMap<String, String>>()
+            db.collection("users")
+                .get()
+                .addOnSuccessListener { documents ->
+                    for(document in documents){
+                        val user = hashMapOf(
+                            "nome" to "${document.data.get("nome")}",
+                            "telefone" to "${document.data.get("telefone")}"
+                        )
+                        pessoaList.add(user)
+                        Log.d("Firestore", "${document.id} => ${document.data}")
                     }
-                    Column(
+
+                }
+                .addOnFailureListener { e ->
+                    Log.w("Firestore", "Error getting document", e)
+                }
+            LazyColumn {
+                items(pessoaList){ pessoa ->
+                    Row(
                         Modifier
-                            .fillMaxWidth(0.5f)
-                    ){
-                        Text(text = "${pessoa.telefone}")
+                            .fillMaxWidth(),
+                        Arrangement.Center
+                    ) {
+                        Column (
+                            Modifier
+                                .fillMaxWidth(0.5f)
+                        ){
+                            Text(text = pessoa["nome"] ?: "--")
+                        }
+                        Column(
+                            Modifier
+                                .fillMaxWidth(0.5f)
+                        ){
+                            Text(text = pessoa["telefone"] ?: "--")
+                        }
                     }
                 }
             }
         }
+
+
         Divider()
     }
 }
