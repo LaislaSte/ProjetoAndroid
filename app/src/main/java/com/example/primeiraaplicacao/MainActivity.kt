@@ -1,7 +1,9 @@
 package com.example.primeiraaplicacao
 
 import android.annotation.SuppressLint
+import android.nfc.Tag
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -48,45 +50,24 @@ import com.example.primeiraaplicacao.roomDB.Pessoa
 import com.example.primeiraaplicacao.ui.theme.PrimeiraAplicacaoTheme
 import com.example.primeiraaplicacao.viewModel.Repository
 import com.example.primeiraaplicacao.viewModel.ViewModelPessoa
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.firestore
 
 class MainActivity : ComponentActivity() {
 
-    //funcoes lazy - pode ser criado o banco durante a run do app, no segundo plano (background)
-    private val db by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            DatabasePessoa::class.java,
-                "pessoa.db"
-        ).build()
-    }
-
-    private val viewModel by viewModels<ViewModelPessoa> (
-        factoryProducer = {
-            //objects podem receber qualquer coisa
-            //(:) e um extend do Java, seria como se fosse uma heranca ou recebimento de propriedade
-            object : ViewModelProvider.Factory{
-                override fun <T : ViewModel> create(modelClass: Class<T>) : T {
-                    return ViewModelPessoa(Repository(db)) as T
-                }
-            }
-        }
-    )
-
+    val db = Firebase.firestore
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            PrimeiraAplicacaoTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    App(viewModel, this)
-                }
-            }
+            App(db)
         }
     }
 }
 
 @Composable
-fun App(viewModel: ViewModelPessoa, mainActivity: MainActivity) {
+fun App(db: FirebaseFirestore) {
     var nome by remember {
         mutableStateOf("")
     }
@@ -101,10 +82,6 @@ fun App(viewModel: ViewModelPessoa, mainActivity: MainActivity) {
 
     var pessoaList by remember {
         mutableStateOf(listOf<Pessoa>())
-    }
-
-    viewModel.getPessoa().observe(mainActivity){
-        pessoaList = it
     }
 
     Column(
@@ -151,14 +128,72 @@ fun App(viewModel: ViewModelPessoa, mainActivity: MainActivity) {
 
         Button(
             onClick = {
-                viewModel.upsertPessoa(pessoa)
-                nome =""
-                telefone = ""
+                val user = hashMapOf(
+                    "nome" to nome,
+                    "telefone" to telefone
+                )
+
+                db.collection("users")
+                    .add(user)
+                    .addOnSuccessListener { documentReference ->
+                        Log.d("Firestore", "DocumentSnapshot added with ID: ${documentReference.id}")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w("Firestore", "Error adding document", e)
+                    }
             },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
             Text("Cadastrar")
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        Row(
+            Modifier
+                .fillMaxWidth(),
+            Arrangement.Center
+        ) {
+            Column (
+                Modifier
+                    .fillMaxWidth(0.5f)
+            ){
+                db.collection("users")
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        for(document in documents){
+                            val list = hashMapOf(
+                                "nome" to "${document.data.get("nome")}"
+                            )
+                            Log.d("Firestore", "${document.id} => ${document.data}")
+                        }
+
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w("Firestore", "Error getting document", e)
+                    }
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth(0.5f)
+            ){
+                db.collection("users")
+                    .get()
+                    .addOnSuccessListener { documents ->
+                        for(document in documents){
+                            val list = hashMapOf(
+                                "telefone" to "${document.data.get("telefone")}"
+                            )
+                            Log.d("Firestore", "${document.id} => ${document.data}")
+                        }
+
+                    }
+                    .addOnFailureListener { e ->
+                        Log.w("Firestore", "Error getting document", e)
+                    }
+            }
+        }
+        Divider()
 
         Row(
             Modifier
@@ -178,14 +213,13 @@ fun App(viewModel: ViewModelPessoa, mainActivity: MainActivity) {
                 Text(text = "telefone")
             }
         }
+
         Divider()
+
         LazyColumn {
             items(pessoaList){ pessoa ->
                 Row(
                     Modifier
-                        .clickable {
-                            viewModel.deletePessoa(pessoa)
-                        }
                         .fillMaxWidth(),
                     Arrangement.Center
 
