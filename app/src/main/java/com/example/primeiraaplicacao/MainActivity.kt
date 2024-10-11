@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -28,11 +29,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,11 +56,13 @@ import com.example.primeiraaplicacao.viewModel.Repository
 import com.example.primeiraaplicacao.viewModel.ViewModelPessoa
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.firestore
+import org.w3c.dom.Text
 
 class MainActivity : ComponentActivity() {
 
-    val db = Firebase.firestore
+    private val db = Firebase.firestore
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -88,8 +93,7 @@ fun App(db: FirebaseFirestore) {
 
     Column(
         Modifier
-
-            .background(Color.Black)
+            .background(Color.White)
             .fillMaxSize()
             .padding(16.dp)
     ) {
@@ -105,7 +109,7 @@ fun App(db: FirebaseFirestore) {
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White
+                color = Color.Black
             )
         }
 
@@ -141,7 +145,7 @@ fun App(db: FirebaseFirestore) {
                 db.collection("users")
                     .add(user)
                     .addOnSuccessListener { documentReference ->
-                        Log.d("Firestore", "DocumentSnapshot added with ID: ${documentReference.id}")
+                        Log.d("Firestorm", "DocumentSnapshot added with ID: ${documentReference.id}")
                     }
                     .addOnFailureListener { e ->
                         Log.w("Firestore", "Error adding document", e)
@@ -164,10 +168,12 @@ fun App(db: FirebaseFirestore) {
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White
+                color = Color.Black
             )
         }
         Spacer(modifier = Modifier.height(20.dp))
+
+        //LABELS
         Row(
             Modifier
                 .fillMaxWidth(),
@@ -177,66 +183,90 @@ fun App(db: FirebaseFirestore) {
                 Modifier
                     .fillMaxWidth(0.5f)
             ){
-                Text(text = "Nome")
+                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "Nome")
             }
             Column(
                 Modifier
                     .fillMaxWidth(0.5f)
             ){
-                Text(text = "telefone")
+                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "telefone")
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth(0.5f)
+            ){
+                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "Funções")
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Row(
-            Modifier
-                .fillMaxWidth(),
-            Arrangement.Center
+            Modifier.fillMaxWidth()
         ) {
-            Column (
-                Modifier
-                    .fillMaxWidth(0.5f)
-            ){
+//            SnapshotStateList<T>
+
+            var users = remember { mutableStateListOf<Pair<String, Map<String, Any>>>() } // Document ID + Dados
+            LaunchedEffect(Unit) {
                 db.collection("users")
                     .get()
                     .addOnSuccessListener { documents ->
-                        for(document in documents){
-                            val list = hashMapOf(
-                                "nome" to "${document.data.get("nome")}"
-                            )
+                        for (document in documents) {
+                            users.add(document.id to document.data)
                             Log.d("Firestore", "${document.id} => ${document.data}")
                         }
-
                     }
                     .addOnFailureListener { e ->
-                        Log.w("Firestore", "Error getting document", e)
+                        Log.w("Firestore", "Error getting documents", e)
                     }
             }
-            Column(
-                Modifier
-                    .fillMaxWidth(0.5f)
-            ){
-                db.collection("users")
-                    .get()
-                    .addOnSuccessListener { documents ->
-                        for(document in documents){
-                            val list = hashMapOf(
-                                "telefone" to "${document.data.get("telefone")}"
-                            )
-                            Log.d("Firestore", "${document.id} => ${document.data}")
+            LazyColumn {
+                items(users){pessoa ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth(),
+                        Arrangement.Center
+                    ) {
+                        Column (
+                            Modifier
+                                .fillMaxWidth()
+                        ){
+                            val nome = pessoa.second["nome"] as? String ?: "Desconhecido"
+                            Text(text = nome, modifier = Modifier.weight(1f))
                         }
-
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                        ){
+                            val telefone = pessoa.second["telefone"] as? String ?: "Sem Telefone"
+                            Text(text = telefone, modifier = Modifier.weight(1f))
+                        }
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                        ){
+                            val id = pessoa.first as? String ?: "Sem Telefone"
+                            Button(onClick = {
+                                db.collection("users").document(id)
+                                    .delete()
+                                    .addOnSuccessListener { Log.d("Firebase", "DocumentSnapshot successfully deleted!") }
+                                    .addOnFailureListener { e -> Log.w("Firebase", "Error deleting document", e) }
+                            }) {
+                                Text(
+                                    text = "Deletar",
+                                    fontFamily = FontFamily.Serif,
+                                    color = Color.Black
+                                )
+                            }
+                        }
                     }
-                    .addOnFailureListener { e ->
-                        Log.w("Firestore", "Error getting document", e)
-                    }
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Titulo da Lista de outra forma
+        // SECOND LIST
         Row(
             Modifier.fillMaxWidth(),
             Arrangement.Center
@@ -246,7 +276,7 @@ fun App(db: FirebaseFirestore) {
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
                 fontSize = 30.sp,
-                color = Color.White
+                color = Color.Black
             )
         }
 
@@ -298,6 +328,9 @@ fun App(db: FirebaseFirestore) {
         }
 
 
-        Divider()
     }
+}
+
+private fun <T> SnapshotStateList<T>.add(element: QueryDocumentSnapshot?) {
+
 }

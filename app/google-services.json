@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "535716255160",
-    "project_id": "projetoagendamento-a1834",
-    "storage_bucket": "projetoagendamento-a1834.appspot.com"
+    "project_number": "958631495932",
+    "project_id": "primeiroprojeto-ea0ca",
+    "storage_bucket": "primeiroprojeto-ea0ca.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:535716255160:android:d76a0388ce2bb2ac766b4d",
+        "mobilesdk_app_id": "1:958631495932:android:8bc51137ae796cc3d5ef79",
         "android_client_info": {
           "package_name": "com.example.primeiraaplicacao"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCaDbFocZO7xejV6TXirLi3vsvcooX5gok"
+          "current_key": "AIzaSyCZ4CHGLN_0zXSH_KqlPu2IK7M69oayl54"
         }
       ],
       "services": {
