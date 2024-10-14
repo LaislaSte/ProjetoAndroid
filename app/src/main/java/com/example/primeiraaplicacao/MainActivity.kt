@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@SuppressLint("UnrememberedMutableState")
+@SuppressLint("UnrememberedMutableState", "SuspiciousIndentation")
 @Composable
 fun App(db: FirebaseFirestore) {
     var nome by remember {
@@ -177,25 +177,25 @@ fun App(db: FirebaseFirestore) {
         Row(
             Modifier
                 .fillMaxWidth(),
-            Arrangement.Center
+            Arrangement.Start
         ) {
             Column (
                 Modifier
-                    .fillMaxWidth(0.5f)
+                    .fillMaxWidth(0.3f)
             ){
-                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "Nome")
+                Text( fontWeight = FontWeight.Bold, fontSize = 16.sp, text = "Nome")
+            }
+            Column(
+                Modifier
+                    .fillMaxWidth(0.4f)
+            ){
+                Text( fontWeight = FontWeight.Bold, fontSize = 16.sp, text = "telefone")
             }
             Column(
                 Modifier
                     .fillMaxWidth(0.5f)
             ){
-                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "telefone")
-            }
-            Column(
-                Modifier
-                    .fillMaxWidth(0.5f)
-            ){
-                Text( fontWeight = FontWeight.Bold, fontSize = 20.sp, text = "Funções")
+                Text( fontWeight = FontWeight.Bold, fontSize = 16.sp, text = "Funções")
             }
         }
 
@@ -207,7 +207,7 @@ fun App(db: FirebaseFirestore) {
 //            SnapshotStateList<T>
 
             var users = remember { mutableStateListOf<Pair<String, Map<String, Any>>>() } // Document ID + Dados
-            LaunchedEffect(Unit) {
+//            LaunchedEffect(Unit) {
                 db.collection("users")
                     .get()
                     .addOnSuccessListener { documents ->
@@ -219,43 +219,44 @@ fun App(db: FirebaseFirestore) {
                     .addOnFailureListener { e ->
                         Log.w("Firestore", "Error getting documents", e)
                     }
-            }
+//            }
             LazyColumn {
                 items(users){pessoa ->
                     Row(
                         Modifier
                             .fillMaxWidth(),
-                        Arrangement.Center
+                        Arrangement.Start
                     ) {
                         Column (
                             Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth(0.3f)
                         ){
                             val nome = pessoa.second["nome"] as? String ?: "Desconhecido"
-                            Text(text = nome, modifier = Modifier.weight(1f))
+                            Text(text = nome, fontSize = 14.sp)
                         }
                         Column(
                             Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth(0.4f)
                         ){
                             val telefone = pessoa.second["telefone"] as? String ?: "Sem Telefone"
-                            Text(text = telefone, modifier = Modifier.weight(1f))
+                            Text(text = telefone, fontSize = 14.sp)
                         }
                         Column(
                             Modifier
-                                .fillMaxWidth()
+                                .fillMaxWidth(0.5f)
                         ){
                             val id = pessoa.first as? String ?: "Sem Telefone"
                             Button(onClick = {
                                 db.collection("users").document(id)
                                     .delete()
-                                    .addOnSuccessListener { Log.d("Firebase", "DocumentSnapshot successfully deleted!") }
+                                    .addOnSuccessListener { Log.d("Firebase", "DocumentSnapshot successfully deleted! ${id}") }
                                     .addOnFailureListener { e -> Log.w("Firebase", "Error deleting document", e) }
                             }) {
                                 Text(
-                                    text = "Deletar",
+                                    text = "🗑️",
                                     fontFamily = FontFamily.Serif,
-                                    color = Color.Black
+                                    color = Color.Black,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -266,71 +267,5 @@ fun App(db: FirebaseFirestore) {
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // SECOND LIST
-        Row(
-            Modifier.fillMaxWidth(),
-            Arrangement.Center
-        ) {
-            Text(
-                text = "Nomes e telefones de outra forma",
-                fontFamily = FontFamily.Serif,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp,
-                color = Color.Black
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Row(
-            Modifier.fillMaxWidth()
-        ) {
-
-            val pessoaList = mutableStateListOf<HashMap<String, String>>()
-            db.collection("users")
-                .get()
-                .addOnSuccessListener { documents ->
-                    for(document in documents){
-                        val user = hashMapOf(
-                            "nome" to "${document.data.get("nome")}",
-                            "telefone" to "${document.data.get("telefone")}"
-                        )
-                        pessoaList.add(user)
-                        Log.d("Firestore", "${document.id} => ${document.data}")
-                    }
-
-                }
-                .addOnFailureListener { e ->
-                    Log.w("Firestore", "Error getting document", e)
-                }
-            LazyColumn {
-                items(pessoaList){ pessoa ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth(),
-                        Arrangement.Center
-                    ) {
-                        Column (
-                            Modifier
-                                .fillMaxWidth(0.5f)
-                        ){
-                            Text(text = pessoa["nome"] ?: "--")
-                        }
-                        Column(
-                            Modifier
-                                .fillMaxWidth(0.5f)
-                        ){
-                            Text(text = pessoa["telefone"] ?: "--")
-                        }
-                    }
-                }
-            }
-        }
-
-
     }
-}
-
-private fun <T> SnapshotStateList<T>.add(element: QueryDocumentSnapshot?) {
-
 }
